@@ -1,20 +1,34 @@
 import os
+import sys
 import os.path
 import re
 import requests
 import shutil
 import tarfile
 import traceback
+import json
 import threading
 
 import numpy as np
 import tensorflow as tf
 
+sys.path.append('/lego_cnn')
+
+#from lego_cnn.mrcnn import model as modellib
 import mrcnn.model as modellib
-from samples.brixilated_lego import lego
+#from samples.brixilated_lego import config
 
 
 def classify(context, event):
+
+    #test = {
+    #        '1': 2
+    #        }
+    #return context.Response(body=str(os.listdir('/lego_cnn/samples/brixilated_lego')),
+    #                        headers={},
+    #                        content_type='text/plain',
+    #                        status_code=requests.codes.ok)
+    context.logger.info(f'lego_cnn ls: {os.listdir("/lego_cnn/samples/brixilated_lego")}')
 
     # we're going to need a unique temporary location to handle each event,
     # as we download a file as part of each function invocation
@@ -78,12 +92,12 @@ class NuclioResponseError(Exception):
                                 status_code=self._status_code)
 
 
-class InferenceConfig(lego.LegoConfig().__class__):
-    # Run detection on one image at a time
-    GPU_COUNT = 1
-    IMAGES_PER_GPU = 1
-
-
+#class InferenceConfig(config.LegoConfig().__class__):
+#    # Run detection on one image at a time
+#    GPU_COUNT = 1
+#    IMAGES_PER_GPU = 1
+#
+#
 class FunctionState(object):
     """
     This class has classvars that are set by methods invoked during file import,
@@ -123,7 +137,7 @@ class Paths(object):
 
     # Mask R-CNN paths
     model_path = os.getenv('MODEL_PATH', os.path.join(os.sep, 'logs'))
-    weights_path = os.getenv('WEIGHTS_PATH', os.path.join(os.sep, 'tmp', 'weights')
+    weights_path = os.getenv('WEIGHTS_PATH', os.path.join(os.sep, 'tmp', 'weights'))
     weights_filename = os.getenv('WEIGHTS_FILENAME', 'mask_rcnn_lego_0111.h5')
 
 
@@ -200,14 +214,15 @@ class Helpers(object):
         is loaded to memory only once per function deployment.
         """
 
+
         # load the Mask R-CNN Model
         FunctionState.model = Helpers.load_maskrcnn()
 
-#        # load the graph def from trained model data
-#        FunctionState.graph = Helpers.load_graph_def()
-#
-#        # load the node ID to human-readable string mapping
-#        FunctionState.node_lookup = Helpers.load_node_lookup()
+        # load the graph def from trained model data
+        FunctionState.graph = Helpers.load_graph_def()
+
+        # load the node ID to human-readable string mapping
+        FunctionState.node_lookup = Helpers.load_node_lookup()
 
         # signal that we're ready
         FunctionState.done_loading = True
@@ -222,9 +237,9 @@ class Helpers(object):
         if not os.path.isfile(weights_path):
             raise NuclioResponseError('Failed to load weights', requests.codes.service_unavailable)
 
-        config = InferenceConfig()
-        model = modellib.MaskRCNN(mode="inference", model_dir="", config=config)
-        model.load_weights(weights_path, by_name=True)
+        #config = InferenceConfig()
+        #model = modellib.MaskRCNN(mode="inference", model_dir="", config=config)
+        #model.load_weights(weights_path, by_name=True)
 
         return model
 
