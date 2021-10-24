@@ -13,6 +13,7 @@ os.environ['CUDA_VISIBLE_DEVICES'] = '-1'
 
 import numpy as np
 import tensorflow as tf
+from skimage.measure import find_contours, approximate_polygon
 
 sys.path.append('/lego_cnn')
 
