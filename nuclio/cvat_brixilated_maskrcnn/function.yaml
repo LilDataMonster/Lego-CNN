@@ -1,0 +1,94 @@
+metadata:
+  name: tf-brixilated-mask-rcnn-lego
+  namespace: cvat
+  annotations:
+    name: Brixilated Lego Mask RCNN
+    type: detector
+    framework: tensorflow
+    spec: |
+      [
+        {"id": 0, "name": "BG"},
+        {"id": 1, "name": "2431"},
+        {"id": 2, "name": "3003"},
+        {"id": 3, "name": "3005"},
+        {"id": 4, "name": "3010"},
+        {"id": 5, "name": "3020"},
+        {"id": 6, "name": "3021"},
+        {"id": 7, "name": "3022"},
+        {"id": 8, "name": "3023"},
+        {"id": 9, "name": "3024"},
+        {"id": 10, "name": "3069"},
+        {"id": 11, "name": "3070"},
+        {"id": 12, "name": "3176"},
+        {"id": 13, "name": "3622"},
+        {"id": 14, "name": "3700"},
+        {"id": 15, "name": "3710"},
+        {"id": 16, "name": "3958"},
+        {"id": 17, "name": "4150"},
+        {"id": 18, "name": "4274"},
+        {"id": 19, "name": "6141"},
+        {"id": 20, "name": "11211"},
+        {"id": 21, "name": "11476"},
+        {"id": 22, "name": "11477"},
+        {"id": 23, "name": "15068"},
+        {"id": 24, "name": "15573"},
+        {"id": 25, "name": "22885"},
+        {"id": 26, "name": "24201"},
+        {"id": 27, "name": "24246"},
+        {"id": 28, "name": "25269"},
+        {"id": 29, "name": "29119"},
+        {"id": 30, "name": "29120"},
+        {"id": 31, "name": "33909"},
+        {"id": 32, "name": "35480"},
+        {"id": 33, "name": "36840"},
+        {"id": 34, "name": "47458"},
+        {"id": 35, "name": "47905"},
+        {"id": 36, "name": "85984"},
+        {"id": 37, "name": "87079"},
+        {"id": 38, "name": "87087"},
+        {"id": 39, "name": "87580"},
+        {"id": 40, "name": "93273"},
+        {"id": 41, "name": "98138"},
+        {"id": 42, "name": "99206"}
+      ]
+
+spec:
+  description: |
+    An implementation of Mask RCNN on Python 3 and TensorFlow for Brixilated Rudy Flyer Lego Set.
+
+  runtime: 'python:3.9'
+  handler: main:handler
+  eventTimeout: 30s
+  env:
+    - name: MASK_RCNN_DIR
+      value: /opt/nuclio/Mask_RCNN
+  build:
+    image: cvat/tf.brixilated.mask_rcnn_lego
+    baseImage: tensorflow/tensorflow:2.5.0
+    directives:
+      postCopy:
+        - kind: WORKDIR
+          value: /opt/nuclio
+        - kind: RUN
+          value: apt update -y && apt install --no-install-recommends -y git curl wget
+        - kind: RUN
+          value: git clone -b nuclio https://github.com/LilDataMonster/Lego-CNN.git Mask_RCNN
+        - kind: RUN
+          value: curl -s https://api.github.com/repos/LilDataMonster/Lego-CNN/releases/latest | grep browser_download_url | cut -d '"' -f 4 | wget -O Mask_RCNN/mask_rcnn_lego.h5 -i -
+        - kind: RUN
+          value: pip3 install numpy>=1.21.2 cython pyyaml scikit-image Pillow requests scipy
+
+  triggers:
+    myHttpTrigger:
+      maxWorkers: 2
+      kind: 'http'
+      workerAvailabilityTimeoutMilliseconds: 10000
+      attributes:
+        maxRequestBodySize: 33554432 # 32MB
+
+  platform:
+    attributes:
+      restartPolicy:
+        name: always
+        maximumRetryCount: 3
+      mountMode: volume
