@@ -99,4 +99,7 @@ class LegoConfig(Config):
     PLOT_GRAPH = False                                       # None: to not plot, False: plot, True: plot nested / details
     
     USE_MINI_MASK = False
+<<<<<<< Updated upstream
 
+=======
+>>>>>>> Stashed changes

@@ -19,7 +19,7 @@ spec:
     - "pip install requests tensorflow==2.5.0 Pillow cython matplotlib opencv-python h5py pydot pydot-ng scipy scikit-image imgaug pycocotools"
     - "pip install numpy==1.21.2"
     #- "mkdir -p /tmp/weights /tmp/model"
-    - "git clone https://github.com/LilDataMonster/Lego-CNN.git lego_cnn"
+    - "git clone -b nuclio https://github.com/LilDataMonster/Lego-CNN.git lego_cnn"
     - "curl -s https://api.github.com/repos/LilDataMonster/Lego-CNN/releases/latest   | grep browser_download_url  | cut -d '\"' -f 4 | wget -O mask_rcnn_lego.h5 -i -"
     #- "wget http://download.tensorflow.org/models/image/imagenet/inception-2015-12-05.tgz"
     #- "tar -xzvf inception-2015-12-05.tgz -C /tmp/tfmodel"
