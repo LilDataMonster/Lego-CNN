@@ -1,20 +1,37 @@
 import os
+import sys
 import os.path
 import re
 import requests
 import shutil
 import tarfile
 import traceback
+import json
 import threading
+
+os.environ['CUDA_VISIBLE_DEVICES'] = '-1'
 
 import numpy as np
 import tensorflow as tf
 
+sys.path.append('/lego_cnn')
+
+#from lego_cnn.mrcnn import model as modellib
 import mrcnn.model as modellib
+#from samples.brixilated_lego import config
 from samples.brixilated_lego import lego
 
 
 def classify(context, event):
+
+    #test = {
+    #        '1': 2
+    #        }
+    #return context.Response(body=str(os.listdir('/lego_cnn/samples/brixilated_lego')),
+    #                        headers={},
+    #                        content_type='text/plain',
+    #                        status_code=requests.codes.ok)
+    context.logger.info(f'lego_cnn ls: {os.listdir("/lego_cnn/samples/brixilated_lego")}')
 
     # we're going to need a unique temporary location to handle each event,
     # as we download a file as part of each function invocation
@@ -24,9 +41,14 @@ def classify(context, event):
     # at any point will still return a proper response
     try:
 
+        context.logger.info(f'Done Loading: {FunctionState.done_loading}')
         # if we're not ready to handle this request yet, deny it
         if not FunctionState.done_loading:
             context.logger.warn_with('Model data not done loading yet, denying request')
+            #if not FunctionState.is_loading:
+            #    #Helpers.on_import()
+            #    t = threading.Thread(target=Helpers.on_import)
+            #    t.start()
             raise NuclioResponseError('Model data not loaded yet, cannot serve this request',
                                       requests.codes.service_unavailable)
 
@@ -93,6 +115,8 @@ class FunctionState(object):
     # holds the Mask R-CNN model
     model = None
 
+    is_loading = False
+
 #    # holds the TensorFlow graph def
 #    graph = None
 
@@ -123,8 +147,8 @@ class Paths(object):
 
     # Mask R-CNN paths
     model_path = os.getenv('MODEL_PATH', os.path.join(os.sep, 'logs'))
-    weights_path = os.getenv('WEIGHTS_PATH', os.path.join(os.sep, 'tmp', 'weights')
-    weights_filename = os.getenv('WEIGHTS_FILENAME', 'mask_rcnn_lego_0111.h5')
+    weights_path = os.getenv('WEIGHTS_PATH', os.path.join(os.sep))
+    weights_filename = os.getenv('WEIGHTS_FILENAME', 'mask_rcnn_lego.h5')
 
 
 class Helpers(object):
@@ -155,7 +179,8 @@ class Helpers(object):
 
         # read image
         image = tf.keras.preprocessing.image.load_img(image_path)
-        input_data= tf.keras.preprocessing.image.img_to_array(image)
+        image_data = tf.keras.preprocessing.image.img_to_array(image)
+        print(np.shape(image_data))
 
         # predict
         model = FunctionState.model
@@ -200,17 +225,22 @@ class Helpers(object):
         is loaded to memory only once per function deployment.
         """
 
+        print('on_import()!')
+
+        FunctionState.is_loading = True
+
         # load the Mask R-CNN Model
         FunctionState.model = Helpers.load_maskrcnn()
 
-#        # load the graph def from trained model data
-#        FunctionState.graph = Helpers.load_graph_def()
-#
-#        # load the node ID to human-readable string mapping
-#        FunctionState.node_lookup = Helpers.load_node_lookup()
+        ## load the graph def from trained model data
+        #FunctionState.graph = Helpers.load_graph_def()
+
+        ## load the node ID to human-readable string mapping
+        #FunctionState.node_lookup = Helpers.load_node_lookup()
 
         # signal that we're ready
         FunctionState.done_loading = True
+        FunctionState.is_loading = False
 
     @staticmethod
     def load_maskrcnn():
@@ -225,6 +255,7 @@ class Helpers(object):
         config = InferenceConfig()
         model = modellib.MaskRCNN(mode="inference", model_dir="", config=config)
         model.load_weights(weights_path, by_name=True)
+        model.keras_model._make_predict_function()
 
         return model
 
@@ -247,27 +278,27 @@ class Helpers(object):
 #
 #        return tf.get_default_graph()
 
-    @staticmethod
-    def load_node_lookup():
-        """
-        Composes the mapping between node IDs and human-readable strings. Returns the composed mapping.
-        """
-
-        # load the mappings from which we can build our mapping
-        string_uid_to_labels = Helpers._load_label_lookup()
-        node_id_to_string_uids = Helpers._load_uid_lookup()
-
-        # compose the final mapping of integer node ID to human-readable string
-        result = {}
-        for node_id, string_uid in node_id_to_string_uids.items():
-            label = string_uid_to_labels.get(string_uid)
-
-            if label is None:
-                raise NuclioResponseError('Failed to compose node lookup')
-
-            result[node_id] = label
-
-        return result
+#    @staticmethod
+#    def load_node_lookup():
+#        """
+#        Composes the mapping between node IDs and human-readable strings. Returns the composed mapping.
+#        """
+#
+#        # load the mappings from which we can build our mapping
+#        string_uid_to_labels = Helpers._load_label_lookup()
+#        node_id_to_string_uids = Helpers._load_uid_lookup()
+#
+#        # compose the final mapping of integer node ID to human-readable string
+#        result = {}
+#        for node_id, string_uid in node_id_to_string_uids.items():
+#            label = string_uid_to_labels.get(string_uid)
+#
+#            if label is None:
+#                raise NuclioResponseError('Failed to compose node lookup')
+#
+#            result[node_id] = label
+#
+#        return result
 
     @staticmethod
     def download_file(context, url, target_path):
@@ -375,6 +406,7 @@ class Helpers(object):
         return result
 
 
+print('starting thread')
 # perform the loading in another thread to not block import - the function
 # handler will gracefully decline requests until we're ready to handle them
 t = threading.Thread(target=Helpers.on_import)
