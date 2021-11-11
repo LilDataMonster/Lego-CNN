@@ -1,0 +1,16 @@
+numpy
+scipy
+Pillow
+fiftyone
+ffmpeg-python
+cython
+matplotlib
+scikit-image
+opencv-python
+pycocotools
+h5py
+imgaug
+IPython[all]
+pydot
+pydot-ng
+jupyterlab
