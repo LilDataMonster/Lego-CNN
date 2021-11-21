@@ -3,11 +3,13 @@ version: '3'
 
 services:
   lego_cnn:
-    build: .
+    build:
+      context: environment/
     volumes:
       - ./:/tf
     ports:
       - 8080:8080
+      - 5151:5151
     deploy:
       resources:
         reservations:
