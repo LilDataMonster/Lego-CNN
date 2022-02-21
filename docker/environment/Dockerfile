@@ -19,7 +19,8 @@ SHELL ["/bin/bash", "-c"]
 ENV DEBIAN_FRONTEND=noninteractive
 
 RUN apt-get update -yq && apt-get install -yq \
-        postgresql-client x11-apps build-essential pkg-config software-properties-common unzip curl gnupg ca-certificates libgl1-mesa-glx ffmpeg python3 python3-pip python3-dev \
+        postgresql-client x11-apps build-essential pkg-config software-properties-common unzip curl gnupg ca-certificates libgl1-mesa-glx ffmpeg python3 python3-pip python3-dev git vim \
+        libxi-dev libxxf86vm-dev libgl-dev \
         cuda-command-line-tools-${CUDA/./-} \
         libcublas-${CUDA/./-} \
         cuda-nvrtc-${CUDA/./-} \
@@ -67,6 +68,12 @@ RUN ln -s $(which python3) /usr/local/bin/python \
     && jupyter labextension install jupyterlab-plotly \
     && jupyter labextension install @jupyter-widgets/jupyterlab-manager plotlywidget \
     && jupyter lab build
+
+# Initalize/install blender
+USER root
+ENV USER=root
+RUN echo "import blenderproc; blenderproc.init()" > /root/init_blenderproc.py && \
+    blenderproc run /root/init_blenderproc.py && rm /root/init_blenderproc.py
 
 #CMD ["python", "samples/lego/lego.py", "--dataset=datasets/lego", "--logs=snapshots", "--enable-augmentation", "--weights=last", "--epochs=40"]
 CMD jupyter lab --allow-root --ip 0.0.0.0 --port 8080 --no-browser

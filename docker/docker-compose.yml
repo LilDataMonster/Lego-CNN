@@ -7,9 +7,10 @@ services:
     environment:
       - TZ=American/New_York
     volumes:
-      #- ./:/tf
-      - $HOME:$HOME
-    #user: ${UID}:${GID}
+      - ./:/tf
+      #- $HOME:$HOME
+      - /etc/passwd:/etc/passwd:ro
+    user: ${UID}:${GID}
     working_dir: $HOME
     stdin_open: true
     tty: true
