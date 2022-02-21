@@ -1,15 +1,19 @@
 version: '3'
 
-
 services:
   lego_cnn:
     build:
       context: environment/
+    environment:
+      - TZ=American/New_York
     volumes:
-      - ./:/tf
-    ports:
-      - 8080:8080
-      - 5151:5151
+      #- ./:/tf
+      - $HOME:$HOME
+    #user: ${UID}:${GID}
+    working_dir: $HOME
+    stdin_open: true
+    tty: true
+    network_mode: "host"
     deploy:
       resources:
         reservations:
