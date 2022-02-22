@@ -65,8 +65,8 @@ COPY ./requirements.txt .
 RUN ln -s $(which python3) /usr/local/bin/python \
     && pip install -U pip setuptools \
     && pip install --no-cache-dir -r requirements.txt \
-    && jupyter labextension install jupyterlab-plotly \
-    && jupyter labextension install @jupyter-widgets/jupyterlab-manager plotlywidget \
+    && jupyter labextension install jupyterlab-plotly@4.14.3 \
+    && jupyter labextension install @jupyter-widgets/jupyterlab-manager plotlywidget@4.14.3 \
     && jupyter lab build
 
 # Initalize/install blender

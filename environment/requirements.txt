@@ -20,13 +20,14 @@ opencv-contrib-python
 optuna
 pandas
 Pillow
-plotly
+plotly==4.14.3
 psycopg2-binary
 pycocotools
 pydot
 pydot-ng
 pytest
 PyYAML
+requests>=2.27.1
 seaborn
 scikit-learn
 scikit-image
