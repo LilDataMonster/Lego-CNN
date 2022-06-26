@@ -64,7 +64,7 @@ ENV LANG C.UTF-8
 COPY ./requirements.txt .
 RUN ln -s $(which python3) /usr/local/bin/python \
     && pip install -U pip setuptools \
-    && pip install --no-cache-dir -r requirements.txt \
+    && pip install --no-cache-dir --extra-index-url https://download.pytorch.org/whl/cu113 -r requirements.txt \
     && jupyter labextension install jupyterlab-plotly@4.14.3 \
     && jupyter labextension install @jupyter-widgets/jupyterlab-manager plotlywidget@4.14.3 \
     && jupyter lab build
@@ -74,6 +74,8 @@ USER root
 ENV USER=root
 RUN echo "import blenderproc; blenderproc.init()" > /root/init_blenderproc.py && \
     blenderproc run /root/init_blenderproc.py && rm /root/init_blenderproc.py
+
+ENV PATH=$PATH:/root/blender/blender-3.1.0-linux-x64/
 
 #CMD ["python", "samples/lego/lego.py", "--dataset=datasets/lego", "--logs=snapshots", "--enable-augmentation", "--weights=last", "--epochs=40"]
 CMD jupyter lab --allow-root --ip 0.0.0.0 --port 8080 --no-browser

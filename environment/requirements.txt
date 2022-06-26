@@ -20,7 +20,7 @@ opencv-contrib-python
 optuna
 pandas
 Pillow
-plotly==4.14.3
+plotly
 psycopg2-binary
 pycocotools
 pydot

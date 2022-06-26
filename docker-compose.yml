@@ -2,15 +2,43 @@ version: '3'
 
 services:
   lego_cnn:
-    image: ghcr.io/lildatamonster/lego-cnn/lego-cnn:0.0
-    #build:
-    #  context: environment/
-    #  dockerfile: Dockerfile
+    #image: ghcr.io/lildatamonster/lego-cnn/lego-cnn:0.0
+    build:
+      context: environment/
+      dockerfile: Dockerfile
     environment:
       - TZ=American/New_York
+      - BLENDER_USER_SCRIPTS=/app/blender/scripts
+      - DISPLAY
     volumes:
-      - $HOME:$HOME
-    working_dir: $HOME
+      - ./:/app
+      #- $HOME/.Xauthority:/root/.Xauthority
+      - $XAUTHORITY:/root/.Xauthority
+    working_dir: /app
+    stdin_open: true
+    tty: true
+    network_mode: "host"
+    deploy:
+      resources:
+        reservations:
+          devices:
+            - driver: nvidia
+              count: 1
+              capabilities: [gpu]
+  blender:
+    build:
+      context: environment/
+      dockerfile: Dockerfile
+    command: blender --addons io_scene_importldraw
+    environment:
+      - TZ=American/New_York
+      - BLENDER_USER_SCRIPTS=/app/blender/scripts
+      - DISPLAY
+    volumes:
+      - ./:/app
+      #- $HOME/.Xauthority:/root/.Xauthority
+      - $XAUTHORITY:/root/.Xauthority
+    working_dir: /app
     stdin_open: true
     tty: true
     network_mode: "host"
