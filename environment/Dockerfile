@@ -1,18 +1,13 @@
 ARG UBUNTU_VERSION=20.04
 ARG TZ=America/New_York
 
-ARG ARCH=
-ARG CUDA=11.3
-FROM nvidia/cuda${ARCH:+-$ARCH}:${CUDA}.1-base-ubuntu${UBUNTU_VERSION} as base
+ARG CUDNN=8
+ARG CUDA=11.6
+FROM nvidia/cuda:${CUDA}.2-cudnn${CUDNN}-devel-ubuntu${UBUNTU_VERSION} as base
 # ARCH and CUDA are specified again because the FROM directive resets ARGs
 # (but their default value is retained if set previously)
 ARG ARCH
 ARG CUDA
-ARG CUDNN=8.2.0.53-1
-ARG CUDNN_MAJOR_VERSION=8
-ARG LIB_DIR_PREFIX=x86_64
-ARG LIBNVINFER=8.0.1-1
-ARG LIBNVINFER_MAJOR_VERSION=8
 
 # Needed for string substitution
 SHELL ["/bin/bash", "-c"]
@@ -28,7 +23,6 @@ RUN apt-get update -yq && apt-get install -yq \
         libcurand-${CUDA/./-} \
         libcusolver-${CUDA/./-} \
         libcusparse-${CUDA/./-} \
-        libcudnn8=${CUDNN}+cuda${CUDA} \
         libfreetype6-dev \
         libhdf5-serial-dev \
         libzmq3-dev \
@@ -41,16 +35,18 @@ RUN apt-get update -yq && apt-get install -yq \
         nodejs
 
 # Install TensorRT if not building for PowerPC
-# NOTE: libnvinfer uses cuda11.3 versions
+# NOTE: libnvinfer uses cuda11.6 versions
+ARG LIBNVINFER=8.4.1-1
+ARG LIBNVINFER_MAJOR_VERSION=8
 RUN [[ "${ARCH}" = "ppc64le" ]] || { apt-get update && \
-        apt-get install -y --no-install-recommends libnvinfer${LIBNVINFER_MAJOR_VERSION}=${LIBNVINFER}+cuda11.3 \
-        libnvinfer-plugin${LIBNVINFER_MAJOR_VERSION}=${LIBNVINFER}+cuda11.3 \
+        apt-get install -y --no-install-recommends libnvinfer${LIBNVINFER_MAJOR_VERSION}=${LIBNVINFER}+cuda${CUDA} \
+        libnvinfer-plugin${LIBNVINFER_MAJOR_VERSION}=${LIBNVINFER}+cuda${CUDA} \
         && apt-get clean \
         && rm -rf /var/lib/apt/lists/*; }
 
 
 # For CUDA profiling, TensorFlow requires CUPTI.
-ENV LD_LIBRARY_PATH /usr/local/cuda/extras/CUPTI/lib64:/usr/local/cuda/lib64:/usr/local/cuda-11.1/lib64:$LD_LIBRARY_PATH
+ENV LD_LIBRARY_PATH /usr/local/cuda/extras/CUPTI/lib64:/usr/local/cuda/lib64:/usr/local/cuda-${CUDA}/lib64:$LD_LIBRARY_PATH
 
 # Link the libcuda stub to the location where tensorflow is searching for it and reconfigure
 # dynamic linker run-time bindings
@@ -63,7 +59,7 @@ ENV LANG C.UTF-8
 # Install python packages
 COPY ./requirements.txt .
 RUN ln -s $(which python3) /usr/local/bin/python \
-    && pip install -U pip setuptools \
+    && pip install --no-cache-dir pip setuptools wheel \
     && pip install --no-cache-dir --extra-index-url https://download.pytorch.org/whl/cu113 -r requirements.txt \
     && jupyter labextension install jupyterlab-plotly@4.14.3 \
     && jupyter labextension install @jupyter-widgets/jupyterlab-manager plotlywidget@4.14.3 \
