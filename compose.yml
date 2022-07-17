@@ -1,6 +1,6 @@
 services:
   lego_cnn:
-    #image: ghcr.io/lildatamonster/lego-cnn/lego-cnn:0.0
+    image: ghcr.io/lildatamonster/lego-cnn/lego-cnn:0.0
     build:
       context: environment/
       dockerfile: Dockerfile
