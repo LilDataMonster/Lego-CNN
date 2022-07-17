@@ -2,7 +2,7 @@ services:
   lego_cnn:
     image: ghcr.io/lildatamonster/lego-cnn/lego-cnn:0.0
     build:
-      context: environment/
+      context: environment/main
       dockerfile: Dockerfile
     environment:
       - TZ=American/New_York
