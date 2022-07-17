@@ -27,26 +27,15 @@ RUN useradd -rm -p "$(openssl passwd -6 lildatamonster)" -d /home/${USER} -s /bi
 USER ${USER}
 WORKDIR /home/${USER}
 
-# Create python venv and setup blenderproc
+ENV PATH=$PATH:/home/${USER}/.local/bin
+
+# Create python venv
+COPY ./requirements.txt /
 RUN curl -sS https://bootstrap.pypa.io/get-pip.py | python && \
     python -m venv /home/${USER}/tf_env && \
     source /home/${USER}/tf_env/bin/activate && \
     pip install --no-cache-dir wheel setuptools && \
-    pip install --no-cache-dir blenderproc
-
-# Initalize/install blender
-RUN source /home/${USER}/tf_env/bin/activate && \
-    blenderproc pip install && \
-    echo "import blenderproc; blenderproc.init()" > /home/${USER}/init_blenderproc.py && \
-    blenderproc run /home/${USER}/init_blenderproc.py && rm /home/${USER}/init_blenderproc.py
-
-# Install python packages
-COPY ./requirements.txt /
-RUN source /home/${USER}/tf_env/bin/activate && \
-    pip install --no-cache-dir -r /requirements.txt --extra-index-url https://download.pytorch.org/whl/cu116 && \
+    pip install --no-cache-dir -r /requirements.txt && \
     jupyter lab build
 
-ENV PATH=$PATH:/home/${USER}/.local/bin:/home/${USER}/blender/blender-3.1.0-linux-x64/
-
-#CMD ["python", "samples/lego/lego.py", "--dataset=datasets/lego", "--logs=snapshots", "--enable-augmentation", "--weights=last", "--epochs=40"]
-CMD jupyter lab --allow-root --ip 0.0.0.0 --port 8080 --no-browser
+CMD ["jupyter", "lab", "--ip", "0.0.0.0", "--port", "8080", "--no-browser", "--NotebookApp.token='lildatamonster'"]
